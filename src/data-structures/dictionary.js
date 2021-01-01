@@ -52,4 +52,9 @@ class Dictionary {
 
     return false
   }
+
+  get (key) {
+    const valuePair = this.table[this.toStrFn[key]]
+    return valuePair == null ? undefined : valuePair.value
+  }
 }
