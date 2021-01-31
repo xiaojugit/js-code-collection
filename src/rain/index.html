@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      height: 800px;
+      background: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="starrySky"></canvas>
+
+  <script src="./MeteorRain.js"></script>
+  <script>
+    function createMeteorRain() {
+
+      //重置canvas大小
+      window.addEventListener('resize', function () {
+        cvs.setAttribute('width', document.body.clientWidth);
+        cvs.setAttribute('height', document.body.clientHeight);
+      });
+
+      let cvs = document.getElementById('starrySky');
+      let ctx = cvs.getContext('2d');
+
+      cvs.setAttribute('width', document.body.clientWidth);
+      cvs.setAttribute('height', document.body.clientHeight);
+
+      let meteorShower = new MeteorShower(cvs, ctx);
+      meteorShower.start();
+    }
+    createMeteorRain()
+  </script>
+</body>
+
+</html>
