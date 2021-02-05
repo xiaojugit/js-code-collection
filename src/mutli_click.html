@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .box {
+            width: 200px;
+            height: 40px;
+            line-height: 20px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .ellipsis-dot {
+            float: right;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="btn">按钮</button>
+    <textarea id="textValue"></textarea>
+
+
+    <div class="box">
+        <span class="ellipsis-dot">...</span> 随便写一点好了随便写一点好了随便写一点好了随便写一点好了随便写一点好了随便写一点好了随便写一点好了随便写一点好了随便写一点好了
+    </div>
+
+</body>
+
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
+
+<script>
+    var btn = document.getElementById('btn');
+
+    function nclickEvent(n, dom, fn) {
+        dom.removeEventListener('dblclick', null);
+        var n = parseInt(n) < 1 ? 1 : parseInt(n),
+            count = 0,
+            lastTime = 0; //用于记录上次结束的时间
+        var handler = function(event) {
+            //获取本次点击的时间
+            var currentTime = Date.now();
+
+            //如果本次点击的时间和上次结束时间相比大于300毫秒就把count置0
+            count = (currentTime - lastTime) < 300 ? count + 1 : 0;
+            lastTime = Date.now();
+
+            if (count >= n - 1) {
+                fn(event, n);
+                count = 0;
+            }
+        };
+        dom.addEventListener('click', handler);
+    }
+
+    nclickEvent(5, btn, function(event, n) {
+        console.log(n + 'click');
+        //这里面放置要处理的事件
+    })
+
+    document.getElementById('textValue').onchange = function(e) {
+        console.log(e.target.value);
+    }
+</script>
+
+</html>
