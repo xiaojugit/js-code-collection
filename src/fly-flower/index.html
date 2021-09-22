@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>飘花</title>
+    <style>
+      body {
+        display: flex;
+        align-items: flex-start;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="show_rose_canvas" width="540" height="789"></canvas>
+    <script type="module">
+      import Confetti from './confetti.js';
+      new Confetti();
+    </script>
+    <script>
+      !(function () {
+        var flowers = [];
+
+        function Flower(pos, $img, type) {
+          this.pos = {
+            x: pos ? pos.x : 0,
+            y: pos ? pos.y : 0,
+          };
+          this.vel = {
+            x: 0,
+            y: 0,
+          };
+          this.type = type;
+          this.rotate = Math.random() * Math.PI;
+          this.rotateResistance = 1;
+          this.rotateCircle = Math.pow(2, ((Math.random() * 3) >> 0) + 1);
+          this.rotateMax = (Math.random() * Math.PI) / 4;
+          this.resistance = 1;
+          this.gravity = 0;
+
+          this.$img = $img;
+        }
+
+        Flower.prototype.update = function () {
+          // apply resistance
+          this.vel.x *= this.resistance;
+          this.vel.y *= this.resistance;
+
+          // gravity down
+          this.vel.y += this.gravity;
+
+          // update position based on speed
+          this.pos.x += this.vel.x;
+          this.pos.y += this.vel.y;
+        };
+
+        Flower.prototype.render = function (c) {
+          //			//console.log(this.pos)
+          c.save();
+          c.translate(this.pos.x, this.pos.y); //空置旋转中心点
+
+          this.rotate += (Math.random() * Math.PI) / 18; //每次生成随即角度
+          if (this.rotate > Math.PI * this.rotateCircle + Math.PI / 2) {
+            //如果转了几圈，差不多可以摇摆了
+            var _rotate =
+              ((Math.sin(this.rotate) * Math.PI) / 4) * this.rotateResistance +
+              Math.PI / 4; //前后摇摆Math.PI/4
+            if (this.rotateResistance > 0) {
+              this.rotateResistance -= 0.0001;
+            }
+            if (this.pos.x > 0.001) {
+              //左边的花瓣向右边跑，右边的向左边跑
+              if (this.type == 0) {
+                this.pos.x += Math.sin((Math.random() * Math.PI) / 2) * 0.8;
+              } else {
+                this.pos.x -= Math.sin((Math.random() * Math.PI) / 2) * 0.8;
+              }
+            }
+            c.rotate(_rotate);
+          } else {
+            //花瓣转圈
+            c.rotate(this.rotate);
+          }
+
+          c.translate(-this.pos.x, -this.pos.y); //恢复中心点
+
+          c.drawImage(this.$img, this.pos.x, this.pos.y);
+
+          c.restore();
+        };
+
+        var explode = function (allWidth, allHeight, $imgs) {
+          var count = Math.random() * 80 + 100;
+          //			var count = 100;
+
+          for (var i = 0; i < count; i++) {
+            (function () {
+              setTimeout(function () {
+                var type = (Math.random() * 2) >> 0;
+                //						type = 1;
+                if (type == 0) {
+                  //左边喷射
+                  var flower = new Flower(
+                    {
+                      x: 0,
+                      y: (Math.random() * allHeight * 2) / 4 + allHeight / 8,
+                    },
+                    $imgs[(Math.random() * $imgs.length) >> 0],
+                    0
+                  );
+                  var angle = -((Math.random() * Math.PI) / 6 + Math.PI / 6);
+                  //					angle=-Math.PI/3;
+                  // emulate 3D effect by using cosine and put more particles in the middle
+                  var speed =
+                    Math.cos((Math.random() * Math.PI) / 2) *
+                    (10 * Math.random() + 15);
+                  //					speed=20;
+                  flower.vel.x = Math.cos(angle) * speed;
+                  flower.vel.y = Math.sin(angle) * speed;
+                } else if (type == 1) {
+                  //右边喷射
+                  var flower = new Flower(
+                    {
+                      x: allWidth,
+                      y: (Math.random() * allHeight * 2) / 4 + allHeight / 8,
+                    },
+                    $imgs[(Math.random() * $imgs.length) >> 0],
+                    1
+                  );
+                  var angle = (Math.random() * Math.PI) / 2 + Math.PI;
+                  //							angle=-Math.PI;
+                  // emulate 3D effect by using cosine and put more particles in the middle
+                  var speed =
+                    Math.cos((Math.random() * Math.PI) / 2) *
+                    (10 * Math.random() + 15);
+                  //					speed=20;
+                  flower.vel.x = Math.cos(angle) * speed;
+                  flower.vel.y = Math.sin(angle) * speed;
+                }
+
+                flower.gravity = 0.08; //重力g的大小
+                flower.resistance = 0.93; //速度衰减值（阻力）
+
+                flowers.push(flower);
+              }, 150 * Math.sqrt(count - i));
+            })(i);
+          }
+        };
+
+        var loop = function (c) {
+          c.clearRect(0, 0, allWidth, allHeight);
+          for (i = 0; i < flowers.length; i++) {
+            flowers[i].update();
+
+            flowers[i].render(c);
+          }
+        };
+
+        var canvasArray = [],
+          c = document.getElementById('show_rose_canvas'),
+          a = c.getContext('2d'),
+          width = 20,
+          height = 20,
+          allWidth = parseFloat(getComputedStyle(c).width),
+          allHeight = parseFloat(getComputedStyle(c).height);
+
+        c.width = allWidth;
+        c.height = allHeight;
+        var img = new Image();
+        img.src = '1piece_of_pedal.png';
+        img.onload = function () {
+          for (var i = 0; i < 20; i++) {
+            var cloneNode = c.cloneNode(0),
+              cloneContext = cloneNode.getContext('2d');
+            var randomScale = Math.random() * 0.8 + 0.6; //创建不同大小的花瓣
+
+            cloneNode.width = width * randomScale;
+            cloneNode.height = height * randomScale;
+            cloneNode.style.width = width * randomScale + 'px';
+            cloneNode.style.height = height * randomScale + 'px';
+
+            cloneContext.globalAlpha = Math.random() * 0.4 + 0.6;
+            cloneContext.drawImage(
+              this,
+              0,
+              0,
+              width * randomScale,
+              height * randomScale
+            );
+
+            canvasArray[i] = cloneNode;
+          }
+          explode(allWidth, allHeight, canvasArray);
+          setInterval(loop.bind(this, a), 16.7);
+        };
+      })();
+    </script>
+  </body>
+</html>

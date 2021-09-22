@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>画板工具</title>
+    <style>
+      .container {
+        margin: auto;
+      }
+
+      .canvas-container {
+        margin-top: 10px;
+        border: 1px dotted #ccc;
+        vertical-align: top;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <button>撤回</button>
+      <button>前进</button>
+      <button id="save">保存图片</button>
+      <canvas id="c" width="800" height="600"></canvas>
+      <input type="file" id="file" />
+    </div>
+    <script src="https://cdn.bootcdn.net/ajax/libs/fabric.js/4.4.0/fabric.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script>
+      (function () {
+        var json = {};
+        var canvas = (this.__canvas = new fabric.Canvas('c'));
+        fabric.Object.prototype.transparentCorners = false;
+        fabric.Object.prototype.originX = 'left';
+        fabric.Object.prototype.originY = 'top';
+
+        fabric.Image.fromURL('./1.png', function (img) {
+          var oImg = img.set({ left: 0, top: 0 });
+          canvas.add(oImg);
+          oImg.clone(function (c) {
+            canvas.add(c.set({ left: 100, top: 100 }));
+          });
+        });
+
+        // fabric.loadSVGFromURL('./135.svg', function (objects) {
+        //   var obj = objects[0].scale(0.25);
+        //   obj.originX = 'right';
+        //   obj.originY = 'top';
+        //   canvas.centerObject(obj);
+        //   canvas.add(obj);
+        //   canvas.on('mouse:move', function (options) {
+        //     var p = canvas.getPointer(options.e);
+
+        //     canvas.forEachObject(function (obj) {
+        //       var distX = Math.abs(p.x - obj.left),
+        //         distY = Math.abs(p.y - obj.top),
+        //         dist = Math.round(
+        //           Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2))
+        //         );
+
+        //       obj.set('opacity', 1 / (dist / 20));
+        //     });
+
+        //     canvas.renderAll();
+        //   });
+        // });
+
+        // object:modified
+        canvas.on('object:modified', function (e) {
+          console.log(canvas.toJSON());
+          json = canvas.toJSON();
+        });
+
+        document.getElementById('save').onclick = () => {
+          /** @type {CANVASElement} */
+          const tempCanvas = document.createElement('canvas'),
+            ctx = tempCanvas.getContext('2d'),
+            parts = _(_.values(json.objects)),
+            len = parts.value().length,
+            offsetX = parts.map(m => m.left).min(),
+            offsetY = parts.map(m => m.top).min(),
+            w = parts.map(m => m.width * m.scaleX + m.left).max() - offsetX,
+            h = parts.map(m => m.height * m.scaleY + m.top).max() - offsetY;
+          // parts = json.objects,
+          // len = parts.length,
+          // offsetX = Math.min(...parts.map(m => m.left)),
+          // offsetY = Math.min(...parts.map(m => m.top)),
+          // w =
+          //   Math.max(...parts.map(m => m.width * m.scaleX + m.left)) -
+          //   offsetX,
+          // h =
+          //   Math.max(...parts.map(m => m.height * m.scaleY + m.top)) -
+          //   offsetY;
+
+          tempCanvas.setAttribute('width', `${w}px`);
+          tempCanvas.setAttribute('height', `${h}px`);
+
+          parts.forEach((m, i) => {
+            const img = document.createElement('img');
+            img.src = m.src;
+            img.onload = () => {
+              ctx.drawImage(
+                img,
+                m.left - offsetX,
+                m.top - offsetY,
+                m.width * m.scaleX,
+                m.height * m.scaleY
+              );
+
+              if (i + 1 === len) {
+                tempCanvas.toBlob(blob => {
+                  const dataURL = window.URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.setAttribute('download', `${Date.now()}`);
+                  link.href = dataURL;
+                  link.click();
+                  window.URL.revokeObjectURL(dataURL);
+                });
+              }
+            };
+          });
+        };
+      })();
+    </script>
+  </body>
+</html>
